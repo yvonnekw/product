@@ -28,14 +28,11 @@ public class Product {
     private double quantity;
     private BigDecimal startingPrice;
     private BigDecimal buyNowPrice;
-    private Long sellerId;
-
+    private String username;
     private boolean isAvailableForBuyNow;
-    //private Long winnerId;
+
     @ManyToOne
     @JoinColumn(name = "category_id")
-          //  joinColumns = @JoinColumn(name = "product_id"),
-           // inverseJoinColumns = @JoinColumn(name = "category_id")
     private Category category;
 
 }

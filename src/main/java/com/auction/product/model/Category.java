@@ -9,7 +9,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-//@Data
 @Getter
 @Setter
 @Entity
@@ -21,5 +20,4 @@ public class Category {
     private String description;
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
     private List<Product> products;
-
 }

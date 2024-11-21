@@ -3,7 +3,7 @@ package com.auction.product.dto;
 //@Data
 
 public record UserResponse(
-        Long userId,
+        String username,
         String firstName,
         String lastName,
         String emailAddress) {

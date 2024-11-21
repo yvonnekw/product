@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 public record ProductResponse(
         Long productId,
-        Long sellerId,
+        String username,
         String productName,
         String brandName,
         String description,

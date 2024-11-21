@@ -1,13 +1,7 @@
 package com.auction.product.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,12 +10,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Builder
+@Table(name = "bids")
 public class Bid {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long bidId;
     private Long productId;
-    private Long buyerId;
+    private String username;
     private BigDecimal bidAmount;
     private LocalDateTime bidTime;
 }

@@ -8,8 +8,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ProductMapper {
+
+    /*
     public Product toProduct(ProductRequest productRequest) {
-        return  Product.builder()
+        return Product.builder()
                 //.productId(productRequest.productId())
                 .username(productRequest.username())
                 .productName(productRequest.productName())
@@ -22,13 +24,13 @@ public class ProductMapper {
                 .quantity(productRequest.quantity())
                 .isAvailableForBuyNow(productRequest.isAvailableForBuyNow())
                 .isSold(productRequest.isSold())
-                .category(productRequest.category())
+                .categoryId(productRequest.categoryId())
                 .build();
 
     }
 
     public ProductResponse toProductResponse(Product product) {
-        return  new ProductResponse(
+        return new ProductResponse(
                 product.getProductId(),
                 product.getUsername(),
                 product.getProductName(),
@@ -41,12 +43,10 @@ public class ProductMapper {
                 product.getQuantity(),
                 product.isAvailableForBuyNow(),
                 product.isSold(),
-                product.getCategory().getCategoryId(),
-                product.getCategory().getName(),
-                product.getCategory().getDescription()
+                product.getCategoryId()
         );
     }
-
+*/
     public ProductPurchaseResponse toProductPurchaseResponse(Product product, double quantity) {
         return new ProductPurchaseResponse(
                 product.getProductId(),
@@ -54,6 +54,24 @@ public class ProductMapper {
                 product.getDescription(),
                 product.getBuyNowPrice(),
                 quantity
+        );
+    }
+
+    ProductResponse mapToResponse(Product product) {
+        return new ProductResponse(
+                product.getProductId(),
+                product.getUsername(),
+                product.getProductName(),
+                product.getBrandName(),
+                product.getDescription(),
+                product.getStartingPrice(),
+                product.getBuyNowPrice(),
+                product.getColour(),
+                product.getProductSize(),
+                product.getQuantity(),
+                product.isAvailableForBuyNow(),
+                product.isSold(),
+                product.getCategory().getCategoryId()
         );
     }
 }

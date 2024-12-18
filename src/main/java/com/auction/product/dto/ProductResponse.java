@@ -1,6 +1,8 @@
 package com.auction.product.dto;
 
 
+import com.auction.product.model.Category;
+
 import java.math.BigDecimal;
 
 
@@ -17,10 +19,7 @@ public record ProductResponse(
         double quantity,
         boolean isAvailableForBuyNow,
         boolean isSold,
-        Long categoryId,
-        String categoryName,
-        String categoryDescription
-
+        Long categoryId
         ) {
 
 }

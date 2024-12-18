@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 
 @AllArgsConstructor
@@ -28,11 +29,13 @@ public class Product {
     private double quantity;
     private BigDecimal startingPrice;
     private BigDecimal buyNowPrice;
-    private String username;
+    private boolean boughtOnBuyNow;
+    private LocalDateTime bidStartTime;
     private boolean isAvailableForBuyNow;
-
-    @ManyToOne
-    @JoinColumn(name = "category_id")
+    private String username;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
 
 }

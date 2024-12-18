@@ -7,16 +7,17 @@ import com.auction.product.dto.ProductResponse;
 import com.auction.product.exception.ProductPurchaseException;
 import com.auction.product.model.Category;
 import com.auction.product.model.Product;
+import com.auction.product.repostory.BidRepository;
 import com.auction.product.repostory.CategoryRepository;
 import com.auction.product.repostory.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 //import org.springframework.security.oauth2.jwt.Jwt;
 //import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,17 +30,16 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;  // Assuming you have a CategoryRepository
+    private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
-
-    //private final JwtDecoder jwtDecoder;
+    private final BidRepository bidRepository;
 
 
     /**
      * Creates a product and associates it with the logged-in user (via userId).
      */
     public ProductResponse createProduct(String username, ProductRequest productRequest) {
-        Category category = categoryRepository.findById(productRequest.category().getCategoryId())
+        Category category = categoryRepository.findById(productRequest.categoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         log.info("username passed downstream to the create Product service" + username);
@@ -55,8 +55,8 @@ public class ProductService {
                 .startingPrice(productRequest.startingPrice())
                 .buyNowPrice(productRequest.buyNowPrice())
                 .isAvailableForBuyNow(productRequest.isAvailableForBuyNow())
-                .category(category)
                 .isSold(false)
+                .category(category)
                 .build();
 
         productRepository.save(product);
@@ -74,12 +74,219 @@ public class ProductService {
                 product.getQuantity(),
                 product.isAvailableForBuyNow(),
                 product.isSold(),
-                product.getCategory().getCategoryId(),
-                product.getCategory().getName(),
-                product.getCategory().getDescription()
+                category.getCategoryId()
+
         );
     }
-    /*
+
+
+    /**
+     * Fetches all products for the logged-in user based on the userId.
+     */
+    public List<ProductResponse> getProductsForUser(String username) {
+        List<Product> products = productRepository.findByUsername(username);
+
+        return products.stream()
+                .map(product -> new ProductResponse(
+                        product.getProductId(),
+                        product.getUsername(),
+                        product.getProductName(),
+                        product.getBrandName(),
+                        product.getDescription(),
+                        product.getStartingPrice(),
+                        product.getBuyNowPrice(),
+                        product.getColour(),
+                        product.getProductSize(),
+                        product.getQuantity(),
+                        product.isAvailableForBuyNow(),
+                        product.isSold(),
+                        product.getCategory().getCategoryId()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Fetches all products across all sellers.
+     */
+    public List<ProductResponse> getAllProducts() {
+        // Get all products from the repository
+        return productRepository.findAll()
+                .stream()
+                .map(productMapper::mapToResponse)
+                .collect(Collectors.toList());
+
+                /*
+                .stream()
+                .map(product -> new ProductResponse(
+                        product.getProductId(),
+                        product.getUsername(),
+                        product.getProductName(),
+                        product.getBrandName(),
+                        product.getDescription(),
+                        product.getStartingPrice(),
+                        product.getBuyNowPrice(),
+                        product.getColour(),
+                        product.getProductSize(),
+                        product.getQuantity(),
+                        product.isAvailableForBuyNow(),
+                        product.isSold(),
+                        product.getCategory().getCategoryId()
+                ))
+                .collect(Collectors.toList());
+
+        */
+    }
+
+    /**
+     * Fetches product by its productId.
+     */
+    public ProductResponse findByProductId(Long productId) {
+        return productRepository.findById(productId)
+                .map(product -> new ProductResponse(
+                        product.getProductId(),
+                        product.getUsername(),
+                        product.getProductName(),
+                        product.getBrandName(),
+                        product.getDescription(),
+                        product.getStartingPrice(),
+                        product.getBuyNowPrice(),
+                        product.getColour(),
+                        product.getProductSize(),
+                        product.getQuantity(),
+                        product.isAvailableForBuyNow(),
+                        product.isSold(),
+                        product.getCategory().getCategoryId()
+                ))
+                .orElseThrow(() -> new ProductPurchaseException("Product not found with the Id provided: " + productId));
+    }
+
+    /**
+     * Purchases products and handles updating the product quantities.
+     */
+    public List<ProductPurchaseResponse> purchaseProducts(List<ProductPurchaseRequest> request) {
+        var productIds = request.stream().map(ProductPurchaseRequest::productId).collect(Collectors.toList());
+        var storedProducts = productRepository.findAllByProductIdIn(productIds);
+
+        if (productIds.size() != storedProducts.size()) {
+            throw new ProductPurchaseException("One or more products does not exist");
+        }
+
+        var storedRequest = request.stream().sorted(Comparator.comparing(ProductPurchaseRequest::productId)).collect(Collectors.toList());
+        var purchasedProducts = new ArrayList<ProductPurchaseResponse>();
+
+        for (int i = 0; i < storedProducts.size(); i++) {
+            var product = storedProducts.get(i);
+            var productRequest = storedRequest.get(i);
+
+            if (product.getQuantity() < productRequest.quantity()) {
+                throw new ProductPurchaseException("Insufficient stock quantity for product with ID:: " + productRequest.productId());
+            }
+
+            var newAvailableQuantity = product.getQuantity() - productRequest.quantity();
+            product.setQuantity(newAvailableQuantity);
+            productRepository.save(product);
+
+            purchasedProducts.add(productMapper.toProductPurchaseResponse(product, productRequest.quantity()));
+        }
+
+        return purchasedProducts;
+    }
+
+    @Transactional
+    public void saveAllProducts(List<Product> products) {
+        if (products == null || products.isEmpty()) {
+            throw new IllegalArgumentException("Products list must not be null or empty.");
+        }
+
+        try {
+            productRepository.saveAll(products);
+        } catch (Exception e) {
+            log.error("Error saving products", e);
+            throw new RuntimeException("Failed to save products", e);
+        }
+    }
+
+    public Product findProductById(Long productId) {
+        // Find the product by ID using the ProductRepository
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+    }
+
+    @Transactional
+    public void markProductAsBought(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
+
+        // Mark product as sold via "Buy Now"
+        if (product.isSold()) {
+            throw new IllegalStateException("Product has already been sold");
+        }
+
+        product.setBoughtOnBuyNow(true);
+        product.setSold(true);
+        productRepository.save(product);
+
+        log.info("Product with ID {} marked as bought via Buy Now", productId);
+    }
+
+    public void updateProduct(ProductResponse productResponse) {
+        // Fetch the product by its ID
+        Product product = productRepository.findById(productResponse.productId())
+                .orElseThrow(() -> new ProductPurchaseException("Product not found with ID: " + productResponse.productId()));
+
+        // Update the product's availability status
+        product.setAvailableForBuyNow(productResponse.isAvailableForBuyNow());
+
+        // Save the updated product
+        productRepository.save(product);
+        log.info("Updated product availability for product ID: {}", productResponse.productId());
+    }
+
+    public List<ProductResponse> searchProducts(String query) {
+        // Assuming you have a method in the repository to search by name/description
+        List<Product> products = productRepository.searchByQuery(query);
+
+        // Convert the products to ProductResponse objects
+        return products.stream()
+                .map(productMapper::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+
+
+/*
+
+    public void updateProduct(ProductResponse productResponse) {
+        // Find the existing product by its ID
+        Product product = productRepository.findById(productResponse.productId())
+                .orElseThrow(() -> new ProductPurchaseException("Product not found with ID: " + productResponse.productId()));
+
+        // Update the fields with the new values from ProductResponse
+        product.setProductName(productResponse.productName());
+        product.setBrandName(productResponse.brandName());
+        product.setDescription(productResponse.description());
+        product.setColour(productResponse.colour());
+        product.setProductSize(productResponse.productSize());
+        product.setQuantity(productResponse.quantity());
+        product.setStartingPrice(productResponse.startingPrice());
+        product.setBuyNowPrice(productResponse.buyNowPrice());
+        product.setAvailableForBuyNow(productResponse.isAvailableForBuyNow());
+
+        // If the product is sold, mark it as sold
+        if (productResponse.isSold()) {
+            product.setSold(true);
+        }
+
+        // Save the updated product entity
+        productRepository.save(product);
+
+        log.info("Product with ID {} updated successfully", productResponse.productId());
+    }
+
+ */
+}
+
+        /*
     public ProductResponse createProduct(String userId, ProductRequest productRequest) {
         Category category = categoryRepository.findById(productRequest.category().getCategoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -122,132 +329,34 @@ public class ProductService {
                 product.getCategory().getDescription()
         );
     }*/
-    /**
-     * Fetches all products for the logged-in user based on the userId.
-     */
-    public List<ProductResponse> getProductsForUser(String username) {
-        List<Product> products = productRepository.findByUsername(username);
+/*
+    public WinningBid determineWinningBid(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
-        return products.stream()
-                .map(product -> new ProductResponse(
-                        product.getProductId(),
-                        product.getUsername(),
-                        product.getProductName(),
-                        product.getBrandName(),
-                        product.getDescription(),
-                        product.getStartingPrice(),
-                        product.getBuyNowPrice(),
-                        product.getColour(),
-                        product.getProductSize(),
-                        product.getQuantity(),
-                        product.isAvailableForBuyNow(),
-                        product.isSold(),
-                        product.getCategory().getCategoryId(),
-                        product.getCategory().getName(),
-                        product.getCategory().getDescription()
-                ))
-                .collect(Collectors.toList());
-    }
+        Optional<Bid> highestBid = bidRepository.findHighestBidByProduct(productId);
+        if (highestBid.isPresent()) {
+            Bid winningBid = highestBid.get();
 
-    /**
-     * Fetches all products across all sellers.
-     */
-    public List<ProductResponse> getAllProducts() {
-        // Get all products from the repository
-        return productRepository.findAll()
-                .stream()
-                .map(product -> new ProductResponse(
-                        product.getProductId(),
-                        product.getUsername(),
-                        product.getProductName(),
-                        product.getBrandName(),
-                        product.getDescription(),
-                        product.getStartingPrice(),
-                        product.getBuyNowPrice(),
-                        product.getColour(),
-                        product.getProductSize(),
-                        product.getQuantity(),
-                        product.isAvailableForBuyNow(),
-                        product.isSold(),
-                        product.getCategory().getCategoryId(),
-                        product.getCategory().getName(),
-                        product.getCategory().getDescription()
-                ))
-                .collect(Collectors.toList());
-    }
+            WinningBid winningBidResult = new WinningBid();
+            winningBidResult.setProduct(product);
+            winningBidResult.setBid(winningBid);
+            winningBidResult.setUsername(winningBid.getUsername());
+            winningBidResult.setWinningAmount(winningBid.getBidAmount());
+            winningBidResult.setBidEndTime(product.getBidEndTime());
 
-    /**
-     * Fetches product by its productId.
-     */
-    public ProductResponse findByProductId(Long productId) {
-        return productRepository.findById(productId)
-                .map(product -> new ProductResponse(
-                        product.getProductId(),
-                        product.getUsername(),
-                        product.getProductName(),
-                        product.getBrandName(),
-                        product.getDescription(),
-                        product.getStartingPrice(),
-                        product.getBuyNowPrice(),
-                        product.getColour(),
-                        product.getProductSize(),
-                        product.getQuantity(),
-                        product.isAvailableForBuyNow(),
-                        product.isSold(),
-                        product.getCategory().getCategoryId(),
-                        product.getCategory().getName(),
-                        product.getCategory().getDescription()
-                ))
-                .orElseThrow(() -> new ProductPurchaseException("Product not found with the Id provided: " + productId));
-    }
+            winningBidRepository.save(winningBidResult);
 
-    /**
-     * Purchases products and handles updating the product quantities.
-     */
-    public List<ProductPurchaseResponse> purchaseProducts(List<ProductPurchaseRequest> request) {
-        var productIds = request.stream().map(ProductPurchaseRequest::productId).collect(Collectors.toList());
-        var storedProducts = productRepository.findAllByProductIdIn(productIds);
+            // Trigger notification
+            notificationService.notifyWinner(winningBid.getUsername(), productId);
 
-        if (productIds.size() != storedProducts.size()) {
-            throw new ProductPurchaseException("One or more products does not exist");
+            return winningBidResult;
         }
 
-        var storedRequest = request.stream().sorted(Comparator.comparing(ProductPurchaseRequest::productId)).collect(Collectors.toList());
-        var purchasedProducts = new ArrayList<ProductPurchaseResponse>();
-
-        for (int i = 0; i < storedProducts.size(); i++) {
-            var product = storedProducts.get(i);
-            var productRequest = storedRequest.get(i);
-
-            // Check for sufficient quantity
-            if (product.getQuantity() < productRequest.quantity()) {
-                throw new ProductPurchaseException("Insufficient stock quantity for product with ID:: " + productRequest.productId());
-            }
-
-            // Update the available quantity
-            var newAvailableQuantity = product.getQuantity() - productRequest.quantity();
-            product.setQuantity(newAvailableQuantity);
-            productRepository.save(product);
-
-            purchasedProducts.add(productMapper.toProductPurchaseResponse(product, productRequest.quantity()));
-        }
-
-        return purchasedProducts;
+        throw new NoWinningBidException("No valid bids found for this product");
     }
-
-    @Transactional
-    public void saveAll(List<Product> products) {
-        if (products == null || products.isEmpty()) {
-            throw new IllegalArgumentException("Products list must not be null or empty.");
-        }
-
-        try {
-            productRepository.saveAll(products);
-        } catch (Exception e) {
-            log.error("Error saving products", e);
-            throw new RuntimeException("Failed to save products", e);
-        }
-    }
+    */
+//}
 
 
     /*
@@ -439,7 +548,10 @@ public class ProductService {
         return new ProductResponse(order, product);
         return  null;
     }
-*/
+
 
 
 }
+*/
+
+

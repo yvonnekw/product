@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public record ProductRequest(
-       // Long productId,
+        // Long productId,
         String username,
         @NotNull(message = "Product name required")
         String productName,
@@ -24,8 +24,8 @@ public record ProductRequest(
         boolean isSold,
         @Positive(message = "Product quantity should be positive")
         double quantity,
-        @NotNull(message = "Product category is require")
-        Category category
+        @NotNull(message = "Category ID is required")
+        Long categoryId
 
 ) {
 

@@ -12,6 +12,4 @@ import lombok.*;
 public class ProductWrapper {
     private Product product;
     private Bid bid;
-
-
 }

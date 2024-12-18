@@ -9,11 +9,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/v1/admin")
-@RequiredArgsConstructor
+//@RestController
+//@RequestMapping("/api/v1/admin")
+//@RequiredArgsConstructor
 public class AdminController {
 
+    /*
     private final ProductService productService;
 
     @GetMapping()
@@ -29,7 +30,7 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Invalid admin token");
         }
 
-        productService.saveAll(products);
+        productService.saveAllProducts(products);
         return ResponseEntity.ok("Product created successfully");
     }
 
@@ -37,4 +38,5 @@ public class AdminController {
 
         return true;
     }
+    */
 }

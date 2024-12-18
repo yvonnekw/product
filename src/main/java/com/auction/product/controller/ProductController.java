@@ -1,15 +1,18 @@
 package com.auction.product.controller;
 
-import com.auction.product.dto.ProductRequest;
-import com.auction.product.dto.ProductResponse;
+import com.auction.product.dto.*;
 import com.auction.product.exception.ProductNotFoundException;
 import com.auction.product.keycloak.KeycloakClient;
+import com.auction.product.model.Product;
 import com.auction.product.service.ProductService;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import com.fasterxml.jackson.databind.ObjectMapper;
+//import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.annotation.security.PermitAll;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 //import org.springframework.security.oauth2.jwt.Jwt;
@@ -17,10 +20,13 @@ import org.springframework.http.ResponseEntity;
 //import org.springframework.security.oauth2.jwt.JwtDecoders;
 //import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.auction.product.dto.UserResponse;
 //import org.springframework.security.core.Authentication;
 
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -48,6 +54,107 @@ public class ProductController {
     public List<ProductResponse> getAllProducts() {
         return productService.getAllProducts();
     }
+
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductCartResponse> getProductById(@PathVariable Long productId) {
+
+        Product product = productService.findProductById(productId);
+
+        if (product != null) {
+
+            ProductCartResponse productCartResponse = new ProductCartResponse(
+                    product.getProductId(),
+                    product.getQuantity()
+            );
+            return ResponseEntity.ok(productCartResponse);
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+    @PostMapping("/{productId}/mark-as-bought")
+    public ResponseEntity<Void> markProductAsBought(@PathVariable Long productId) {
+        productService.markProductAsBought(productId);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @PutMapping("/{productId}")
+    public ResponseEntity<Void> updateProduct(@PathVariable Long productId, @RequestBody ProductResponse productResponse) {
+
+        if (!productId.equals(productResponse.productId())) {
+            throw new IllegalArgumentException("Product ID in path and body must match.");
+        }
+
+        productService.updateProduct(productResponse);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductResponse>> searchProducts(@RequestParam String query) {
+
+        if (query == null || query.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
+
+        List<ProductResponse> products = productService.searchProducts(query);
+
+        if (products.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(products);
+    }
+
+    @Transactional
+    @PostMapping("/purchase")
+    public ResponseEntity<?> purchaseProducts(@RequestBody Object requests) {
+        if (requests instanceof List<?>) {
+            // Convert LinkedHashMap elements into ProductPurchaseRequest objects
+            List<ProductPurchaseRequest> purchaseRequests = ((List<?>) requests).stream()
+                    .map(obj -> new ObjectMapper().convertValue(obj, ProductPurchaseRequest.class))
+                    .collect(Collectors.toList());
+
+            productService.purchaseProducts(purchaseRequests);
+        } else if (requests instanceof LinkedHashMap) {
+            ProductPurchaseRequest purchaseRequest = new ObjectMapper().convertValue(requests, ProductPurchaseRequest.class);
+
+            // Handle single request
+            productService.purchaseProducts(Collections.singletonList(purchaseRequest));
+        } else {
+            return ResponseEntity.badRequest().body("Invalid request format");
+        }
+        return ResponseEntity.ok().build();
+    }
+
+
+/*
+    @PostMapping("/purchase")
+    @ResponseStatus(HttpStatus.OK)
+    public List<ProductPurchaseResponse> purchase(@RequestBody @Valid List<ProductPurchaseRequest> productRequest) throws ProductNotFoundException {
+        return productService.purchaseProducts(productRequest);
+    }
+*/
+
+    /*
+    // Endpoint to get product details by productId
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable Long productId) {
+        ProductResponse productResponse = productService.findProductById(productId);
+        return ResponseEntity.ok(productResponse);
+    }
+*/
+
+    /*
+    @GetMapping("/{productId}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long productId) {
+        Product product = productService.findProductById(productId);
+        return product != null ? ResponseEntity.ok(product) : ResponseEntity.notFound().build();
+    }
+
+
+     */
 
 /*
     @PostMapping("/create-product")

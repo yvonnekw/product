@@ -18,7 +18,7 @@ public class BidWinnerProducer {
         log.info("Sending Bid winner confirmation");
         Message<BidWinnerConfirmation> message = MessageBuilder
                 .withPayload(bidWinnerConfirmation)
-                .setHeader(KafkaHeaders.TOPIC, "bid-topic")
+                .setHeader(KafkaHeaders.TOPIC, "bid-winner-topic")
                 .build();
         kafkaTemplate.send(message);
     }

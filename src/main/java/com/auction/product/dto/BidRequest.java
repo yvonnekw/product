@@ -4,10 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record BidRequest(
-
-      Long productId,
-      String username,
-      BigDecimal bidAmount,
-       LocalDateTime bidTime
+        Long productId,
+        String username,
+        BigDecimal bidAmount,
+        LocalDateTime bidTime
 ) {
 }

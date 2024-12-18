@@ -1,16 +1,14 @@
 package com.auction.product.kafka;
 
-
-import com.auction.product.dto.UserResponse;
-import com.auction.product.dto.ProductResponse;
+import com.auction.product.model.Product;
 
 import java.math.BigDecimal;
 
 public record BidWinnerConfirmation(
        Long bidId,
+       String buyer,
        BigDecimal bidAmount,
-       UserResponse buyer,
-       ProductResponse product
+       Product product
 ) {
 
 }

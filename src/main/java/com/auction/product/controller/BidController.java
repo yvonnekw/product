@@ -8,6 +8,7 @@ import com.auction.product.service.BidService;
 import com.auction.product.service.ProductWrapper;
 import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,11 +21,12 @@ import java.util.List;
 import com.auction.product.model.Bid;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/bids")
 public class BidController {
 
-    @Autowired
-    private BidService bidService;
+
+    private final BidService bidService;
 
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)

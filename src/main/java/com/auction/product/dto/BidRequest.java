@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 
 public record BidRequest(
         Long productId,
-        String username,
-        BigDecimal bidAmount,
-        LocalDateTime bidTime
+        //String username,
+        BigDecimal bidAmount
+        //LocalDateTime bidTime
 ) {
 }

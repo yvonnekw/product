@@ -64,7 +64,8 @@ public class ProductController {
 
             ProductCartResponse productCartResponse = new ProductCartResponse(
                     product.getProductId(),
-                    product.getQuantity()
+                    product.getQuantity(),
+                    product.getBuyNowPrice()
             );
             return ResponseEntity.ok(productCartResponse);
         }

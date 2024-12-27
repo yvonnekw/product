@@ -16,7 +16,7 @@ public record ProductResponse(
         BigDecimal buyNowPrice,
         String colour,
         String productSize,
-        double quantity,
+        int quantity,
         boolean isAvailableForBuyNow,
         boolean isSold,
         Long categoryId

@@ -23,7 +23,7 @@ public record ProductRequest(
         boolean isAvailableForBuyNow,
         boolean isSold,
         @Positive(message = "Product quantity should be positive")
-        double quantity,
+        int quantity,
         @NotNull(message = "Category ID is required")
         Long categoryId
 

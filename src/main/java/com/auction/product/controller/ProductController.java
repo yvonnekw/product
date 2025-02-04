@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@CrossOrigin("*")
+//@CrossOrigin("*")
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 public class ProductController {
@@ -43,8 +43,9 @@ public class ProductController {
     }
 
     @PostMapping("/create-product")
-    public ProductResponse createProduct(@RequestHeader("X-Username") String username, @RequestBody ProductRequest productRequest) {
+    public ProductResponse createProduct(@RequestHeader("Authorization") String token, @RequestHeader("X-Username") String username,  @RequestBody ProductRequest productRequest) {
         log.info("username passed downstream to the create Product controller " + username);
+        log.debug("Token passed downstream: {}", token);
         return productService.createProduct(username, productRequest);
     }
 
@@ -64,7 +65,8 @@ public class ProductController {
 
             ProductCartResponse productCartResponse = new ProductCartResponse(
                     product.getProductId(),
-                    product.getQuantity()
+                    product.getQuantity(),
+                    product.getBuyNowPrice()
             );
             return ResponseEntity.ok(productCartResponse);
         }

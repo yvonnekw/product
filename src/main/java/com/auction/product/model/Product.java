@@ -26,7 +26,7 @@ public class Product {
     private String description;
     private String colour;
     private String productSize;
-    private double quantity;
+    private int quantity;
     private BigDecimal startingPrice;
     private BigDecimal buyNowPrice;
     private boolean boughtOnBuyNow;
@@ -36,6 +36,4 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
-
-
 }

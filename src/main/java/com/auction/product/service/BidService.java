@@ -2,7 +2,6 @@ package com.auction.product.service;
 
 import com.auction.product.config.constant.BiddingConfig;
 import com.auction.product.dto.BidResponse;
-import com.auction.product.dto.ProductResponse;
 import com.auction.product.exception.ProductNotFoundException;
 import com.auction.product.kafka.BidWinnerConfirmation;
 import com.auction.product.kafka.BidWinnerProducer;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.auction.product.model.Bid;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +67,7 @@ public class BidService {
         return bidRepository.findByUsername(username);
     }
 
-    public List<BidResponse> getAllProducts() {
+    public List<BidResponse> getAllBids() {
         return bidRepository.findAll()
                 .stream()
                 .map(bid -> new BidResponse(

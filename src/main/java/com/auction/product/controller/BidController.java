@@ -2,25 +2,23 @@ package com.auction.product.controller;
 
 import com.auction.product.dto.BidRequest;
 import com.auction.product.dto.BidResponse;
-import com.auction.product.dto.ProductResponse;
 import com.auction.product.exception.ProductNotFoundException;
 import com.auction.product.service.BidService;
-import com.auction.product.service.ProductWrapper;
-import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 //import org.springframework.security.oauth2.jwt.Jwt;
 //import org.springframework.security.oauth2.jwt.JwtDecoder;
 //import org.springframework.security.oauth2.jwt.JwtDecoders;
 
-import java.math.BigDecimal;
 import java.util.List;
 import com.auction.product.model.Bid;
 
+@Slf4j
 @RestController
+//@CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/bids")
 public class BidController {
@@ -30,14 +28,16 @@ public class BidController {
 
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)
-    public String getProduct() {
+    public String getBids() {
         return "bid api working ";
     }
 
     @PostMapping("/submit-bid")
-    @ResponseStatus(HttpStatus.OK)
-    public BidResponse submitBid(@RequestHeader("X-Username") String username,
+            @ResponseStatus(HttpStatus.OK)
+            public BidResponse submitBid(@RequestHeader("Authorization") String token, @RequestHeader("X-Username") String username,
                                  @RequestBody @Valid BidRequest bidRequest) throws ProductNotFoundException {
+        log.info("username passed downstream to the bid controller - submit bid " + username);
+        log.debug("Token passed downstream: {}", token);
         return bidService.submitBid(username, bidRequest);
     }
 /*
@@ -58,8 +58,10 @@ public class BidController {
     }
 
     @GetMapping("/get-bids-for-user")
-    public List<Bid> getBidsForUser(@RequestHeader("X-Username") String username) {
+    public List<Bid> getBidsForUser(@RequestHeader("Authorization") String token, @RequestHeader("X-Username") String username) {
         //String userId = extractUserIdFromAuthHeader(authHeader);
+        log.info("username passed downstream from bid controller " + username);
+        log.debug("Token passed downstream: {}", token);
         String buyerId = String.valueOf(Long.parseLong(username));
 
         return bidService.getBidsByUsername(buyerId);
@@ -68,8 +70,8 @@ public class BidController {
 
     @GetMapping("/get-all-bids")
     @ResponseStatus(HttpStatus.OK)
-    public List<BidResponse> getAllProducts() {
-        return bidService.getAllProducts();
+    public List<BidResponse> getAllProducts(@RequestHeader("X-Auth-Token") String token) {
+        return bidService.getAllBids();
     }
 
 /*

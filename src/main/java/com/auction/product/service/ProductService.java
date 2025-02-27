@@ -34,10 +34,6 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final BidRepository bidRepository;
 
-
-    /**
-     * Creates a product and associates it with the logged-in user (via userId).
-     */
     public ProductResponse createProduct(String username, ProductRequest productRequest) {
         Category category = categoryRepository.findById(productRequest.categoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -67,6 +63,7 @@ public class ProductService {
                 product.getProductName(),
                 product.getBrandName(),
                 product.getDescription(),
+                product.getProductImageUrl(),
                 product.getStartingPrice(),
                 product.getBuyNowPrice(),
                 product.getColour(),
@@ -93,6 +90,7 @@ public class ProductService {
                         product.getProductName(),
                         product.getBrandName(),
                         product.getDescription(),
+                        product.getProductImageUrl(),
                         product.getStartingPrice(),
                         product.getBuyNowPrice(),
                         product.getColour(),
@@ -148,6 +146,7 @@ public class ProductService {
                         product.getProductName(),
                         product.getBrandName(),
                         product.getDescription(),
+                        product.getProductImageUrl(),
                         product.getStartingPrice(),
                         product.getBuyNowPrice(),
                         product.getColour(),

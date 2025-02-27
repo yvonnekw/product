@@ -24,9 +24,10 @@ public class Product {
     private String productName;
     private String brandName;
     private String description;
+    private String productImageUrl;
     private String colour;
     private String productSize;
-    private int quantity;
+    private Integer quantity;
     private BigDecimal startingPrice;
     private BigDecimal buyNowPrice;
     private boolean boughtOnBuyNow;

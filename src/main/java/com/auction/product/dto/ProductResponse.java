@@ -12,6 +12,7 @@ public record ProductResponse(
         String productName,
         String brandName,
         String description,
+        String productImageUrl,
         BigDecimal startingPrice,
         BigDecimal buyNowPrice,
         String colour,

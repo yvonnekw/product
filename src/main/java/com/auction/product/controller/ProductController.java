@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 public class ProductController {
 
     private final ProductService productService;
+
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)
     public String getProduct() {
@@ -43,7 +44,7 @@ public class ProductController {
     }
 
     @PostMapping("/create-product")
-    public ProductResponse createProduct(@RequestHeader("Authorization") String token, @RequestHeader("X-Username") String username,  @RequestBody ProductRequest productRequest) {
+    public ProductResponse createProduct(@RequestHeader("Authorization") String token, @RequestHeader("X-Username") String username, @RequestBody ProductRequest productRequest) {
         log.info("username passed downstream to the create Product controller " + username);
         log.debug("Token passed downstream: {}", token);
         return productService.createProduct(username, productRequest);
@@ -62,6 +63,27 @@ public class ProductController {
         Product product = productService.findProductById(productId);
 
         if (product != null) {
+            ProductCartResponse productCartResponse = new ProductCartResponse(
+                    product.getProductId(),
+                    product.getProductName(),
+                    product.getDescription(),
+                    product.getProductImageUrl(),
+                    product.getBuyNowPrice(),
+                    product.getQuantity()
+            );
+            return ResponseEntity.ok(productCartResponse);
+        }
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+    /*
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductCartResponse> getProductById(@PathVariable Long productId) {
+
+        Product product = productService.findProductById(productId);
+
+        if (product != null) {
 
             ProductCartResponse productCartResponse = new ProductCartResponse(
                     product.getProductId(),
@@ -73,16 +95,17 @@ public class ProductController {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
+    */
 
     @PostMapping("/{productId}/mark-as-bought")
-    public ResponseEntity<Void> markProductAsBought(@PathVariable Long productId) {
+    public ResponseEntity<Void> markProductAsBought(@RequestHeader("Authorization") String token, @PathVariable Long productId) {
         productService.markProductAsBought(productId);
         return ResponseEntity.noContent().build();
     }
 
 
     @PutMapping("/{productId}")
-    public ResponseEntity<Void> updateProduct(@PathVariable Long productId, @RequestBody ProductResponse productResponse) {
+    public ResponseEntity<Void> updateProduct(@RequestHeader("Authorization") String token, @PathVariable Long productId, @RequestBody ProductResponse productResponse) {
 
         if (!productId.equals(productResponse.productId())) {
             throw new IllegalArgumentException("Product ID in path and body must match.");
@@ -111,7 +134,7 @@ public class ProductController {
 
     @Transactional
     @PostMapping("/purchase")
-    public ResponseEntity<?> purchaseProducts(@RequestBody Object requests) {
+    public ResponseEntity<?> purchaseProducts(@RequestHeader("Authorization") String token, @RequestBody Object requests) {
         if (requests instanceof List<?>) {
             // Convert LinkedHashMap elements into ProductPurchaseRequest objects
             List<ProductPurchaseRequest> purchaseRequests = ((List<?>) requests).stream()
@@ -196,7 +219,7 @@ public class ProductController {
 
     /*
 
-    */
+     */
 /*
     @GetMapping("/get-user-products")
     public List<ProductResponse> getProductsForUser(@RequestHeader("Authorization") String authHeader) {
@@ -206,8 +229,8 @@ public class ProductController {
     }
 */
     //private String extractAccessTokenFromAuthHeader(String authHeader) {
-        //return authHeader.substring(7);
-  //  }
+    //return authHeader.substring(7);
+    //  }
 
     /*
     // Fetch the user ID from Keycloak using the access token

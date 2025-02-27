@@ -14,6 +14,7 @@ public record ProductRequest(
         String brandName,
         @NotNull(message = "Product description required")
         String description,
+      String productImageUrl,
         @Positive(message = "Starting price should be positive")
         BigDecimal startingPrice,
         @Positive(message = "buy now price should be positive")

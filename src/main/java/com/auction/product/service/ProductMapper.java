@@ -64,6 +64,7 @@ public class ProductMapper {
                 product.getProductName(),
                 product.getBrandName(),
                 product.getDescription(),
+                product.getProductImageUrl(),
                 product.getStartingPrice(),
                 product.getBuyNowPrice(),
                 product.getColour(),

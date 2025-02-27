@@ -52,7 +52,7 @@ public class BidController {
     }*/
 
     @GetMapping("/get-bids-for-product")
-    public List<Bid> getBidsForProduct(@RequestParam Long productId) {
+    public List<Bid> getBidsForProduct(@RequestHeader("Authorization") String token, @RequestParam Long productId) {
 
         return bidService.getBidsForProduct(productId);
     }
@@ -70,7 +70,7 @@ public class BidController {
 
     @GetMapping("/get-all-bids")
     @ResponseStatus(HttpStatus.OK)
-    public List<BidResponse> getAllProducts(@RequestHeader("X-Auth-Token") String token) {
+    public List<BidResponse> getAllProducts(@RequestHeader("Authorization") String token) {
         return bidService.getAllBids();
     }
 

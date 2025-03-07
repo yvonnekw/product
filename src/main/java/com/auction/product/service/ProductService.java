@@ -216,36 +216,35 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
 
-        // Mark product as sold via "Buy Now"
         if (product.isSold()) {
             throw new IllegalStateException("Product has already been sold");
         }
 
-        product.setBoughtOnBuyNow(true);
-        product.setSold(true);
-        productRepository.save(product);
+        if (product.getQuantity() == 0) {
+           // product.setBoughtOnBuyNow(true);
+            product.setSold(true);
+            productRepository.save(product);
 
-        log.info("Product with ID {} marked as bought via Buy Now", productId);
+            log.info("Product with ID {} marked as bought via Buy Now", productId);
+        }
     }
 
     public void updateProduct(ProductResponse productResponse) {
-        // Fetch the product by its ID
         Product product = productRepository.findById(productResponse.productId())
                 .orElseThrow(() -> new ProductPurchaseException("Product not found with ID: " + productResponse.productId()));
 
-        // Update the product's availability status
-        product.setAvailableForBuyNow(productResponse.isAvailableForBuyNow());
+        if (product.getQuantity() == 0) {
+            product.setAvailableForBuyNow(productResponse.isAvailableForBuyNow());
 
-        // Save the updated product
-        productRepository.save(product);
-        log.info("Updated product availability for product ID: {}", productResponse.productId());
+            productRepository.save(product);
+            log.info("Updated product availability for product ID: {}", productResponse.productId());
+        }
+
     }
 
     public List<ProductResponse> searchProducts(String query) {
-        // Assuming you have a method in the repository to search by name/description
         List<Product> products = productRepository.searchByQuery(query);
 
-        // Convert the products to ProductResponse objects
         return products.stream()
                 .map(productMapper::mapToResponse)
                 .collect(Collectors.toList());

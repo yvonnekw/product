@@ -104,12 +104,14 @@ public class ProductController {
     }
 
 
-    @PutMapping("/{productId}")
+    @PatchMapping("/{productId}")
     public ResponseEntity<Void> updateProduct(@RequestHeader("Authorization") String token, @PathVariable Long productId, @RequestBody ProductResponse productResponse) {
 
         if (!productId.equals(productResponse.productId())) {
             throw new IllegalArgumentException("Product ID in path and body must match.");
         }
+
+        log.info("product response for product controller update {}", productResponse);
 
         productService.updateProduct(productResponse);
 

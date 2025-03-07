@@ -20,7 +20,6 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productId;
-    private boolean isSold;
     private String productName;
     private String brandName;
     private String description;
@@ -30,8 +29,9 @@ public class Product {
     private Integer quantity;
     private BigDecimal startingPrice;
     private BigDecimal buyNowPrice;
-    private boolean boughtOnBuyNow;
-    private LocalDateTime bidStartTime;
+    //private boolean boughtOnBuyNow;
+    private boolean isSold;
+    //private LocalDateTime bidStartTime;
     private boolean isAvailableForBuyNow;
     private String username;
     @ManyToOne(fetch = FetchType.LAZY)

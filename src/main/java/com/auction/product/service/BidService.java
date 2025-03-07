@@ -85,15 +85,13 @@ public class BidService {
 
         Long productId = bidRequest.productId();
 
-        // Fetch Product
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalStateException("Product not found"));
 
-        if (product.isBoughtOnBuyNow()) {
+        if (product.isSold()) {
             throw new IllegalStateException("Bidding is not allowed for products bought via 'Buy Now'");
         }
 
-        // Fetch the bids and check conditions
         List<Bid> bidsForProduct = bidRepository.findAllByProductId(productId);
         if (bidsForProduct.isEmpty()) {
             throw new IllegalStateException("No bids found for this product");
@@ -103,31 +101,26 @@ public class BidService {
                 .min(Comparator.comparing(Bid::getBidTime))
                 .orElseThrow(() -> new IllegalStateException("No bids found for this product"));
 
-        // Calculate bid end time
+
         Duration biddingDuration = biddingConfig.getBiddingDuration();
         LocalDateTime bidEndTime = earliestBid.getBidTime().plus(biddingDuration);
 
-        // Check if the bidding period has ended
         if (LocalDateTime.now().isBefore(bidEndTime)) {
             throw new IllegalStateException("Bidding period is not over yet");
         }
 
-        // Find the highest bid
         Bid highestBid = bidsForProduct.stream()
                 .max(Comparator.comparing(Bid::getBidAmount))
                 .orElseThrow(() -> new IllegalStateException("No valid bids found for this product"));
 
-        // Create WinningBid
         WinningBid winningBid = new WinningBid();
         winningBid.setProductId(productId);
         winningBid.setUsername(highestBid.getUsername());
         winningBid.setWinningAmount(highestBid.getBidAmount());
         winningBid.setBidEndTime(bidEndTime);
 
-        // Save the winning bid
         winningBidRepository.save(winningBid);
 
-        // Notify the winner using the highest bid details
         BidWinnerConfirmation confirmation = new BidWinnerConfirmation(
                 highestBid.getBidId(),
                 highestBid.getUsername(),

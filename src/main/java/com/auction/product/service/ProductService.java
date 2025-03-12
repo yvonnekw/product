@@ -19,9 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +31,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
     private final BidRepository bidRepository;
+    private final Set<Long> processedRequestIds = new HashSet<>();
 
     public ProductResponse createProduct(String username, ProductRequest productRequest) {
         Category category = categoryRepository.findById(productRequest.categoryId())
@@ -162,6 +161,129 @@ public class ProductService {
     /**
      * Purchases products and handles updating the product quantities.
      */
+
+    public List<ProductPurchaseResponse> purchaseProducts(List<ProductPurchaseRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new ProductPurchaseException("Empty purchase request");
+        }
+
+        // Group requests by productId (to handle duplicates gracefully)
+        Map<Long, Integer> productQuantityMap = new HashMap<>();
+        for (ProductPurchaseRequest request : requests) {
+            productQuantityMap.merge(request.productId(), request.quantity(), Integer::sum);
+        }
+
+        List<Long> uniqueProductIds = new ArrayList<>(productQuantityMap.keySet());
+        List<Product> storedProducts = productRepository.findAllByProductIdIn(uniqueProductIds);
+
+        if (storedProducts.size() != uniqueProductIds.size()) {
+            throw new ProductPurchaseException("One or more products does not exist");
+        }
+
+        List<ProductPurchaseResponse> purchasedProducts = new ArrayList<>();
+
+        for (Product product : storedProducts) {
+            Long productId = product.getProductId();
+            Integer requestedQuantity = productQuantityMap.get(productId);
+
+            System.out.println("Product ID: " + productId + ", Initial Quantity: " + product.getQuantity() + ", Requested Quantity: " + requestedQuantity);
+
+            if (product.getQuantity() < requestedQuantity) {
+                throw new ProductPurchaseException("Insufficient stock quantity for product with ID: " + productId);
+            }
+
+            int newAvailableQuantity = product.getQuantity() - requestedQuantity;
+            product.setQuantity(newAvailableQuantity);
+            productRepository.save(product);
+
+            System.out.println("Product ID: " + productId + ", New Available Quantity: " + newAvailableQuantity);
+
+            purchasedProducts.add(productMapper.toProductPurchaseResponse(product, requestedQuantity));
+        }
+
+        return purchasedProducts;
+    }
+
+/*
+    public List<ProductPurchaseResponse> purchaseProducts(List<ProductPurchaseRequest> request) {
+        var productIds = request.stream().map(ProductPurchaseRequest::productId).collect(Collectors.toList());
+        var storedProducts = productRepository.findAllByProductIdIn(productIds);
+
+        if (productIds.size() != storedProducts.size()) {
+            throw new ProductPurchaseException("One or more products does not exist");
+        }
+
+        var storedRequest = request.stream().sorted(Comparator.comparing(ProductPurchaseRequest::productId)).collect(Collectors.toList());
+        var purchasedProducts = new ArrayList<ProductPurchaseResponse>();
+
+        for (int i = 0; i < storedProducts.size(); i++) {
+            var product = storedProducts.get(i);
+            var productRequest = storedRequest.get(i);
+
+            if (processedRequestIds.contains(productRequest.productId())) {
+                System.out.println("Duplicate request detected for Product ID: " + productRequest.productId());
+                continue;
+            }
+
+            System.out.println("Product ID: " + product.getProductId() + ", Initial Quantity: " + product.getQuantity() + ", Requested Quantity: " + productRequest.quantity());
+
+            if (product.getQuantity() < productRequest.quantity()) {
+                throw new ProductPurchaseException("Insufficient stock quantity for product with ID: " + productRequest.productId());
+            }
+
+            var newAvailableQuantity = product.getQuantity() - productRequest.quantity();
+            product.setQuantity(newAvailableQuantity);
+            productRepository.save(product);
+
+            System.out.println("Product ID: " + product.getProductId() + ", New Available Quantity: " + product.getQuantity());
+
+            purchasedProducts.add(productMapper.toProductPurchaseResponse(product, productRequest.quantity()));
+            processedRequestIds.add(productRequest.productId());
+        }
+
+        return purchasedProducts;
+    }
+
+
+ */
+
+/*
+    public List<ProductPurchaseResponse> purchaseProducts(List<ProductPurchaseRequest> request) {
+        var productIds = request.stream().map(ProductPurchaseRequest::productId).collect(Collectors.toList());
+        var storedProducts = productRepository.findAllByProductIdIn(productIds);
+
+        if (productIds.size() != storedProducts.size()) {
+            throw new ProductPurchaseException("One or more products does not exist");
+        }
+
+        var storedRequest = request.stream().sorted(Comparator.comparing(ProductPurchaseRequest::productId)).collect(Collectors.toList());
+        var purchasedProducts = new ArrayList<ProductPurchaseResponse>();
+
+        for (int i = 0; i < storedProducts.size(); i++) {
+            var product = storedProducts.get(i);
+            var productRequest = storedRequest.get(i);
+
+            System.out.println("Product ID: " + product.getProductId() + ", Initial Quantity: " + product.getQuantity() + ", Requested Quantity: " + productRequest.quantity());
+
+            if (product.getQuantity() < productRequest.quantity()) {
+                throw new ProductPurchaseException("Insufficient stock quantity for product with ID: " + productRequest.productId());
+            }
+
+            var newAvailableQuantity = product.getQuantity() - productRequest.quantity();
+            product.setQuantity(newAvailableQuantity);
+            productRepository.save(product);
+
+            System.out.println("Product ID: " + product.getProductId() + ", New Available Quantity: " + product.getQuantity());
+
+            purchasedProducts.add(productMapper.toProductPurchaseResponse(product, productRequest.quantity()));
+        }
+
+        return purchasedProducts;
+    }
+
+ */
+
+    /*
     public List<ProductPurchaseResponse> purchaseProducts(List<ProductPurchaseRequest> request) {
         var productIds = request.stream().map(ProductPurchaseRequest::productId).collect(Collectors.toList());
         var storedProducts = productRepository.findAllByProductIdIn(productIds);
@@ -190,7 +312,7 @@ public class ProductService {
 
         return purchasedProducts;
     }
-
+*/
     @Transactional
     public void saveAllProducts(List<Product> products) {
         if (products == null || products.isEmpty()) {

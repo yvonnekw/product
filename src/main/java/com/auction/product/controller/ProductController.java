@@ -4,6 +4,7 @@ import com.auction.product.dto.*;
 import com.auction.product.exception.ProductNotFoundException;
 import com.auction.product.keycloak.KeycloakClient;
 import com.auction.product.model.Product;
+import com.auction.product.service.IdempotencyService;
 import com.auction.product.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 //import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -36,6 +37,8 @@ import java.util.stream.Collectors;
 public class ProductController {
 
     private final ProductService productService;
+    private final IdempotencyService idempotencyService;
+    private final ObjectMapper objectMapper;
 
     @GetMapping()
     @ResponseStatus(HttpStatus.OK)
@@ -136,6 +139,52 @@ public class ProductController {
 
     @Transactional
     @PostMapping("/purchase")
+    public ResponseEntity<?> purchaseProducts(
+            @RequestHeader("Authorization") String token,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @RequestBody Object requests) {
+
+        // Log raw incoming request
+        try {
+            System.out.println("Received purchase request payload: " + objectMapper.writeValueAsString(requests));
+        } catch (Exception e) {
+            System.err.println("Error logging request: " + e.getMessage());
+        }
+
+        // Idempotency key validation
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return ResponseEntity.badRequest().body("Missing Idempotency-Key header");
+        }
+
+        if (idempotencyService.isDuplicateRequest(idempotencyKey)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Duplicate request detected");
+        }
+
+        // Convert request
+        List<ProductPurchaseRequest> purchaseRequests;
+        if (requests instanceof List<?>) {
+            purchaseRequests = ((List<?>) requests).stream()
+                    .map(obj -> objectMapper.convertValue(obj, ProductPurchaseRequest.class))
+                    .collect(Collectors.toList());
+        } else if (requests instanceof LinkedHashMap) {
+            ProductPurchaseRequest singleRequest = objectMapper.convertValue(requests, ProductPurchaseRequest.class);
+            purchaseRequests = Collections.singletonList(singleRequest);
+        } else {
+            return ResponseEntity.badRequest().body("Invalid request format");
+        }
+
+        // Process request
+        productService.purchaseProducts(purchaseRequests);
+
+        // Store idempotency key after successful processing
+        idempotencyService.storeRequest(idempotencyKey);
+
+        return ResponseEntity.ok().build();
+    }
+
+/*
+    @Transactional
+    @PostMapping("/purchase")
     public ResponseEntity<?> purchaseProducts(@RequestHeader("Authorization") String token, @RequestBody Object requests) {
         if (requests instanceof List<?>) {
             // Convert LinkedHashMap elements into ProductPurchaseRequest objects
@@ -155,6 +204,8 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
+
+ */
 
 /*
     @PostMapping("/purchase")

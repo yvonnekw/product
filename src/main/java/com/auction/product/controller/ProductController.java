@@ -141,8 +141,68 @@ public class ProductController {
     @PostMapping("/purchase")
     public ResponseEntity<?> purchaseProducts(
             @RequestHeader("Authorization") String token,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @RequestBody Object requests) {
+
+        // Log raw incoming request
+        try {
+            log.info("Received purchase request payload: {}", objectMapper.writeValueAsString(requests));
+        } catch (Exception e) {
+            log.error("Error logging request: {}", e.getMessage());
+        }
+
+        // Idempotency key validation
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return ResponseEntity.badRequest().body("Missing Idempotency-Key header");
+        }
+
+        if (idempotencyService.isDuplicateRequest(idempotencyKey)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Duplicate request detected");
+        }
+
+        // Convert request
+        List<ProductPurchaseRequest> purchaseRequests;
+        try {
+            if (requests instanceof List<?>) {
+                purchaseRequests = ((List<?>) requests).stream()
+                        .map(obj -> objectMapper.convertValue(obj, ProductPurchaseRequest.class))
+                        .collect(Collectors.toList());
+            } else if (requests instanceof LinkedHashMap) {
+                ProductPurchaseRequest singleRequest = objectMapper.convertValue(requests, ProductPurchaseRequest.class);
+                purchaseRequests = Collections.singletonList(singleRequest);
+            } else {
+                return ResponseEntity.badRequest().body("Invalid request format");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error processing request format");
+        }
+
+        // Process request
+        List<ProductPurchaseResponse> responses;
+        try {
+            responses = productService.purchaseProducts(purchaseRequests);
+            // Store idempotency key after successful processing
+            idempotencyService.storeRequest(idempotencyKey);
+        } catch (Exception e) {
+            log.error("Error processing purchase request: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing purchase request");
+        }
+
+        if (responses == null || responses.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(responses);
+    }
+/*
+    @Transactional
+    @PostMapping("/purchase")
+    public ResponseEntity<?> purchaseProducts(
+            @RequestHeader("Authorization") String token,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestBody Object requests) {
+
+
 
         // Log raw incoming request
         try {
@@ -152,8 +212,12 @@ public class ProductController {
         }
 
         // Idempotency key validation
-        if (idempotencyKey == null || idempotencyKey.isBlank()) {
-            return ResponseEntity.badRequest().body("Missing Idempotency-Key header");
+        //if (idempotencyKey == null || idempotencyKey.isBlank()) {
+       //    // return ResponseEntity.badRequest().body("Missing Idempotency-Key header");
+        //}
+
+        if (idempotencyService.isDuplicateRequest(idempotencyKey)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
         }
 
         if (idempotencyService.isDuplicateRequest(idempotencyKey)) {
@@ -182,6 +246,8 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
+
+ */
 /*
     @Transactional
     @PostMapping("/purchase")

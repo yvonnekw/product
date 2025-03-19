@@ -51,9 +51,14 @@ public class ProductMapper {
         return new ProductPurchaseResponse(
                 product.getProductId(),
                 product.getProductName(),
+                product.getBrandName(),
                 product.getDescription(),
+                product.getColour(),
+                product.getProductSize(),
+                product.getStartingPrice(),
                 product.getBuyNowPrice(),
-                quantity
+                quantity,
+                product.getProductImageUrl()
         );
     }
 

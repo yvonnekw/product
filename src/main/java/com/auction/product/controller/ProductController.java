@@ -194,6 +194,13 @@ public class ProductController {
 
         return ResponseEntity.ok(responses);
     }
+
+    @GetMapping("/get-user-products")
+    public List<ProductResponse> getProductsForUser(@RequestHeader("Authorization") String token, @RequestHeader("X-Username") String username) {
+
+        return productService.getProductsForUser(username);
+    }
+
 /*
     @Transactional
     @PostMapping("/purchase")

@@ -47,6 +47,25 @@ public class ProductMapper {
         );
     }
 */
+
+    public ProductResponse mapProductToProductResponse(Product product) {
+        return new ProductResponse(
+                product.getProductId(),
+                product.getUsername(),
+                product.getProductName(),
+                product.getBrandName(),
+                product.getDescription(),
+                product.getProductImageUrl(),
+                product.getStartingPrice(),
+                product.getBuyNowPrice(),
+                product.getColour(),
+                product.getProductSize(),
+                product.getQuantity(),
+                product.isAvailableForBuyNow(),
+                product.isSold(),
+                product.getCategory() != null ? product.getCategory().getCategoryId() : null
+        );
+    }
     public ProductPurchaseResponse toProductPurchaseResponse(Product product, int quantity) {
         return new ProductPurchaseResponse(
                 product.getProductId(),

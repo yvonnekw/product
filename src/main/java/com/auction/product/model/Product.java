@@ -34,6 +34,7 @@ public class Product {
     //private LocalDateTime bidStartTime;
     private boolean isAvailableForBuyNow;
     private String username;
+    private LocalDateTime biddingEndTime;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;

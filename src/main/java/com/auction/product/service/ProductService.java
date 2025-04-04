@@ -31,8 +31,37 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductMapper productMapper;
     private final BidRepository bidRepository;
+
     private final Set<Long> processedRequestIds = new HashSet<>();
 
+    public ProductResponse createProduct(String username, ProductRequest productRequest) {
+        Category category = categoryRepository.findById(productRequest.categoryId())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        log.info("username passed downstream to the create Product service: {}", username);
+
+        Product product = Product.builder()
+                .username(username)
+                .productName(productRequest.productName())
+                .brandName(productRequest.brandName())
+                .description(productRequest.description())
+                .colour(productRequest.colour())
+                .productSize(productRequest.productSize())
+                .quantity(productRequest.quantity())
+                .startingPrice(productRequest.startingPrice())
+                .buyNowPrice(productRequest.buyNowPrice())
+                .isAvailableForBuyNow(productRequest.isAvailableForBuyNow())
+                .isSold(false)
+                .category(category)
+                .build();
+
+        Product savedProduct = productRepository.save(product);
+
+        return productMapper.mapProductToProductResponse(savedProduct);
+    }
+
+
+    /*
     public ProductResponse createProduct(String username, ProductRequest productRequest) {
         Category category = categoryRepository.findById(productRequest.categoryId())
                 .orElseThrow(() -> new RuntimeException("Category not found"));
@@ -54,7 +83,10 @@ public class ProductService {
                 .category(category)
                 .build();
 
-        productRepository.save(product);
+        productRepository.save(product)
+            .stream()
+                .map(productMapper::mapToResponse)
+                .collect(Collectors.toList());
 
         return new ProductResponse(
                 product.getProductId(),
@@ -74,7 +106,7 @@ public class ProductService {
 
         );
     }
-
+*/
 
     /**
      * Fetches all products for the logged-in user based on the userId.
@@ -82,7 +114,12 @@ public class ProductService {
     public List<ProductResponse> getProductsForUser(String username) {
         List<Product> products = productRepository.findByUsername(username);
 
-        return products.stream()
+        return products
+                .stream()
+                .map(productMapper::mapToResponse)
+                .collect(Collectors.toList());
+                /*
+                .stream()
                 .map(product -> new ProductResponse(
                         product.getProductId(),
                         product.getUsername(),
@@ -100,6 +137,8 @@ public class ProductService {
                         product.getCategory().getCategoryId()
                 ))
                 .collect(Collectors.toList());
+
+        */
     }
 
     /**
@@ -137,6 +176,15 @@ public class ProductService {
     /**
      * Fetches product by its productId.
      */
+
+    public ProductResponse findByProductId(Long productId) {
+        return productRepository.findById(productId)
+                .map(productMapper::mapProductToProductResponse)
+                .orElseThrow(() -> new ProductPurchaseException("Product not found with the Id provided: " + productId));
+    }
+
+
+    /*
     public ProductResponse findByProductId(Long productId) {
         return productRepository.findById(productId)
                 .map(product -> new ProductResponse(
@@ -157,7 +205,7 @@ public class ProductService {
                 ))
                 .orElseThrow(() -> new ProductPurchaseException("Product not found with the Id provided: " + productId));
     }
-
+*/
     /**
      * Purchases products and handles updating the product quantities.
      */

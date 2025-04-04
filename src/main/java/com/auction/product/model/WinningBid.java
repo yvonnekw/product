@@ -1,9 +1,6 @@
 package com.auction.product.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -20,8 +17,14 @@ public class WinningBid {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long winningBidId;
     private Long bidId;
-    private Long productId;
+    //private Long productId;
     private String username;
+    private String userFirstName;
+    private String userLastName;
+    private String userEmail;
     private BigDecimal winningAmount;
     private LocalDateTime bidEndTime;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
 }

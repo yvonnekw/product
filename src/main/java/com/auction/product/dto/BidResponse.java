@@ -8,6 +8,18 @@ public record BidResponse(
         Long productId,
         String username,
         BigDecimal bidAmount,
-        LocalDateTime bidTime
+        LocalDateTime bidTime,
+        String productName,
+        String brandName,
+        String description,
+        String productImageUrl,
+        BigDecimal startingPrice,
+        BigDecimal buyNowPrice,
+        String colour,
+        String productSize,
+        int quantity,
+        boolean isAvailableForBuyNow,
+        boolean isSold,
+        Long categoryId
 ) {
 }

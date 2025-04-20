@@ -1,13 +1,11 @@
 package com.auction.product.dto;
 
-import com.auction.product.model.Category;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
 public record ProductRequest(
-        // Long productId,
         String username,
         @NotNull(message = "Product name required")
         String productName,

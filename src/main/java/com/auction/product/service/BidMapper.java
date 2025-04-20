@@ -1,13 +1,10 @@
 package com.auction.product.service;
 
-import com.auction.product.config.constant.BiddingConfig;
+
 import com.auction.product.dto.BidResponse;
-import com.auction.product.kafka.BidWinnerProducer;
 import com.auction.product.model.Bid;
 import com.auction.product.model.Product;
-import com.auction.product.repostory.BidRepository;
 import com.auction.product.repostory.ProductRepository;
-import com.auction.product.repostory.WinningBidRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +14,7 @@ public class BidMapper {
 
 
     private final ProductRepository productRepository;
+
     BidResponse mapBidToBidResponse(Bid bid) {
         Product product = productRepository.findById(bid.getProduct().getProductId()).orElse(null);
         return new BidResponse(

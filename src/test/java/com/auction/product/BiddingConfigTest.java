@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BiddingConfigTest {
 
     @TestConfiguration
-    @EnableConfigurationProperties(BiddingConfig.class) // Enable your configuration properties class
+    @EnableConfigurationProperties(BiddingConfig.class)
     static class TestConfig {
     }
 
@@ -25,6 +25,5 @@ public class BiddingConfigTest {
 
     @Test
     public void testBiddingDuration() {
-        // Validate if the biddingDuration property was injected correctly
         assertThat(biddingConfig.getBiddingDuration()).isEqualTo(Duration.ofMinutes(5));    }
 }

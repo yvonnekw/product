@@ -6,7 +6,6 @@ import com.auction.product.repostory.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -16,8 +15,6 @@ import java.util.Optional;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-    //private final CategoryMap categoryMapper;
-
     public Category createCategory(Category category) {
         return categoryRepository.save(category);
     }

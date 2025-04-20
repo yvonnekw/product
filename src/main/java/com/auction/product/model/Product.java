@@ -2,7 +2,6 @@ package com.auction.product.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -29,9 +28,7 @@ public class Product {
     private Integer quantity;
     private BigDecimal startingPrice;
     private BigDecimal buyNowPrice;
-    //private boolean boughtOnBuyNow;
     private boolean isSold;
-    //private LocalDateTime bidStartTime;
     private boolean isAvailableForBuyNow;
     private String username;
     private LocalDateTime biddingEndTime;

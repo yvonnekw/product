@@ -1,8 +1,6 @@
 package com.auction.product.dto;
 
 
-import com.auction.product.model.Category;
-
 import java.math.BigDecimal;
 
 

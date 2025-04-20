@@ -1,11 +1,9 @@
 package com.auction.product.controller;
 
 
-import com.auction.product.dto.CategoryRequest;
 import com.auction.product.model.Category;
 import com.auction.product.service.CategoryService;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
